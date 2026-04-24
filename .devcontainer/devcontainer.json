@@ -1,0 +1,41 @@
+{
+    "name": "darknet-gpu",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "runArgs": [
+        "--gpus=all",
+        "--shm-size=8g"
+    ],
+    "hostRequirements": {
+        "gpu": "optional"
+    },
+    "containerEnv": {
+        "NVIDIA_VISIBLE_DEVICES": "all",
+        "NVIDIA_DRIVER_CAPABILITIES": "compute,utility,graphics"
+    },
+    "workspaceFolder": "/workspaces/darknet",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/darknet,type=bind,consistency=cached",
+    "remoteUser": "vscode",
+    "postCreateCommand": "nvcc --version && nvidia-smi || echo 'nvidia-smi not available at build; GPU will be checked at runtime.'",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cpptools-extension-pack",
+                "ms-vscode.makefile-tools",
+                "nvidia.nsight-vscode-edition",
+                "twxs.cmake"
+            ],
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "C_Cpp.default.includePath": [
+                    "${workspaceFolder}/include",
+                    "${workspaceFolder}/src",
+                    "/usr/local/cuda/include"
+                ]
+            }
+        }
+    }
+}
