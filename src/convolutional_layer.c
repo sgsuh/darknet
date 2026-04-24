@@ -145,6 +145,57 @@ void cudnn_convolutional_setup(layer *l)
     }
     #endif
 
+    #if CUDNN_MAJOR >= 8
+    int returnedAlgoCount;
+    cudnnConvolutionFwdAlgoPerf_t       fw_results[2 * CUDNN_CONVOLUTION_FWD_ALGO_COUNT];
+    cudnnConvolutionBwdDataAlgoPerf_t   bd_results[2 * CUDNN_CONVOLUTION_BWD_DATA_ALGO_COUNT];
+    cudnnConvolutionBwdFilterAlgoPerf_t bf_results[2 * CUDNN_CONVOLUTION_BWD_FILTER_ALGO_COUNT];
+
+    cudnnGetConvolutionForwardAlgorithm_v7(cudnn_handle(),
+            l->srcTensorDesc,
+            l->weightDesc,
+            l->convDesc,
+            l->dstTensorDesc,
+            CUDNN_CONVOLUTION_FWD_ALGO_COUNT,
+            &returnedAlgoCount,
+            fw_results);
+    for(int i = 0; i < returnedAlgoCount; i++){
+        if(fw_results[i].memory < 2000000000){
+            l->fw_algo = fw_results[i].algo;
+            break;
+        }
+    }
+
+    cudnnGetConvolutionBackwardDataAlgorithm_v7(cudnn_handle(),
+            l->weightDesc,
+            l->ddstTensorDesc,
+            l->convDesc,
+            l->dsrcTensorDesc,
+            CUDNN_CONVOLUTION_BWD_DATA_ALGO_COUNT,
+            &returnedAlgoCount,
+            bd_results);
+    for(int i = 0; i < returnedAlgoCount; i++){
+        if(bd_results[i].memory < 2000000000){
+            l->bd_algo = bd_results[i].algo;
+            break;
+        }
+    }
+
+    cudnnGetConvolutionBackwardFilterAlgorithm_v7(cudnn_handle(),
+            l->srcTensorDesc,
+            l->ddstTensorDesc,
+            l->convDesc,
+            l->dweightDesc,
+            CUDNN_CONVOLUTION_BWD_FILTER_ALGO_COUNT,
+            &returnedAlgoCount,
+            bf_results);
+    for(int i = 0; i < returnedAlgoCount; i++){
+        if(bf_results[i].memory < 2000000000){
+            l->bf_algo = bf_results[i].algo;
+            break;
+        }
+    }
+    #else
     cudnnGetConvolutionForwardAlgorithm(cudnn_handle(),
             l->srcTensorDesc,
             l->weightDesc,
@@ -169,6 +220,7 @@ void cudnn_convolutional_setup(layer *l)
             CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT,
             2000000000,
             &l->bf_algo);
+    #endif
 }
 #endif
 #endif

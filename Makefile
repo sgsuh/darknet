@@ -1,17 +1,19 @@
-GPU=0
-CUDNN=0
+GPU=1
+CUDNN=1
 OPENCV=0
 OPENMP=0
 DEBUG=0
 
-ARCH= -gencode arch=compute_30,code=sm_30 \
-      -gencode arch=compute_35,code=sm_35 \
-      -gencode arch=compute_50,code=[sm_50,compute_50] \
-      -gencode arch=compute_52,code=[sm_52,compute_52]
-#      -gencode arch=compute_20,code=[sm_20,sm_21] \ This one is deprecated?
+# RTX 4070 (Ada Lovelace, Compute Capability 8.9)
+ARCH= -gencode arch=compute_89,code=[sm_89,compute_89]
 
-# This is what I use, uncomment if you know your arch and want to specify
-# ARCH= -gencode arch=compute_52,code=compute_52
+# For other GPUs, uncomment the matching line below.
+# Pascal  (GTX 10xx):             -gencode arch=compute_61,code=[sm_61,compute_61]
+# Volta   (V100):                 -gencode arch=compute_70,code=[sm_70,compute_70]
+# Turing  (RTX 20xx, GTX 16xx):   -gencode arch=compute_75,code=[sm_75,compute_75]
+# Ampere  (RTX 30xx, A100):       -gencode arch=compute_86,code=[sm_86,compute_86]
+# Ada     (RTX 40xx):             -gencode arch=compute_89,code=[sm_89,compute_89]
+# Hopper  (H100):                 -gencode arch=compute_90,code=[sm_90,compute_90]
 
 VPATH=./src/:./examples
 SLIB=libdarknet.so
