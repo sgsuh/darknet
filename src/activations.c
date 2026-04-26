@@ -36,6 +36,8 @@ char *get_activation_string(ACTIVATION a)
             return "hardtan";
         case LHTAN:
             return "lhtan";
+        case PRELU:
+            return "prelu";
         default:
             break;
     }
@@ -58,6 +60,7 @@ ACTIVATION get_activation(char *s)
     if (strcmp(s, "leaky")==0) return LEAKY;
     if (strcmp(s, "tanh")==0) return TANH;
     if (strcmp(s, "stair")==0) return STAIR;
+    if (strcmp(s, "prelu")==0) return PRELU;
     fprintf(stderr, "Couldn't find activation function %s, going with ReLU\n", s);
     return RELU;
 }
@@ -105,6 +108,13 @@ void activate_array(float *x, const int n, const ACTIVATION a)
     }
 }
 
+void activate_array_prelu(float* x, const int n, float params) {
+    int i;
+    for(i = 0; i < n; ++i) {
+        x[i] = prelu_activate(x[i], params);
+    }
+}
+
 float gradient(float x, ACTIVATION a)
 {
     switch(a){
@@ -148,3 +158,9 @@ void gradient_array(const float *x, const int n, const ACTIVATION a, float *delt
     }
 } 
 
+void gradient_array_prelu(const float* x, const int n, float params, float* delta) {
+    int i;
+    for(i = 0; i < n; ++i) {
+        delta[i] *= prelu_gradient(x[i], params);
+    }
+}

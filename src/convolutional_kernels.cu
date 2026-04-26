@@ -84,6 +84,9 @@ void forward_convolutional_layer_gpu(convolutional_layer l, network net)
         binarize_gpu(net.input_gpu, l.c*l.h*l.w*l.batch, l.binary_input_gpu);
         net.input_gpu = l.binary_input_gpu;
     }
+    if(l.index) {
+        net.input_gpu = net.layers[l.index].output_gpu;
+    }
 
 #ifdef CUDNN
     float one = 1;
@@ -129,7 +132,11 @@ void forward_convolutional_layer_gpu(convolutional_layer l, network net)
         add_bias_gpu(l.output_gpu, l.biases_gpu, l.batch, l.n, l.out_w*l.out_h);
     }
 
-    activate_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation);
+    if(l.activation == PRELU) {
+        activate_array_prelu_gpu(l.output_gpu, l.outputs*l.batch, l.prelu_p);
+    } else {
+        activate_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation);
+    }
     //if(l.dot > 0) dot_error_gpu(l);
     if(l.binary || l.xnor) swap_binary(&l);
 }
@@ -182,7 +189,11 @@ void backward_convolutional_layer_gpu(convolutional_layer l, network net)
         smooth_layer(l, 5, l.smooth);
     }
     //constrain_gpu(l.outputs*l.batch, 1, l.delta_gpu, 1);
-    gradient_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation, l.delta_gpu);
+    if(l.activation == PRELU) {
+        gradient_array_prelu_gpu(l.output_gpu, l.outputs*l.batch, l.prelu_p, l.delta_gpu);
+    } else {
+        gradient_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation, l.delta_gpu);
+    }
 
 
     if(l.batch_normalize){

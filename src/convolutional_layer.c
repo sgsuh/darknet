@@ -225,7 +225,7 @@ void cudnn_convolutional_setup(layer *l)
 #endif
 #endif
 
-convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int n, int groups, int size, int stride, int padding, ACTIVATION activation, int batch_normalize, int binary, int xnor, int adam)
+convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int n, int groups, int size, int stride, int padding, ACTIVATION activation, int batch_normalize, int binary, int xnor, int adam, int index)
 {
     int i;
     convolutional_layer l = {0};
@@ -243,6 +243,7 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
     l.size = size;
     l.pad = padding;
     l.batch_normalize = batch_normalize;
+    l.index = index;
 
     l.weights = calloc(c/groups*n*size*size, sizeof(float));
     l.weight_updates = calloc(c/groups*n*size*size, sizeof(float));
@@ -506,6 +507,9 @@ void forward_convolutional_layer(convolutional_layer l, network net)
         binarize_cpu(net.input, l.c*l.h*l.w*l.batch, l.binary_input);
         net.input = l.binary_input;
     }
+    if(l.index) {
+        net.input = net.layers[l.index].output;
+    }
 
     int m = l.n/l.groups;
     int k = l.size*l.size*l.c/l.groups;
@@ -532,7 +536,11 @@ void forward_convolutional_layer(convolutional_layer l, network net)
         add_bias(l.output, l.biases, l.batch, l.n, l.out_h*l.out_w);
     }
 
-    activate_array(l.output, l.outputs*l.batch, l.activation);
+    if(l.activation == PRELU) {
+        activate_array_prelu(l.output, l.outputs * l.batch, l.prelu_p);
+    } else {
+        activate_array(l.output, l.outputs*l.batch, l.activation);
+    }
     if(l.binary || l.xnor) swap_binary(&l);
 }
 

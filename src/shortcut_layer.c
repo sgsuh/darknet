@@ -63,7 +63,12 @@ void forward_shortcut_layer(const layer l, network net)
 {
     copy_cpu(l.outputs*l.batch, net.input, 1, l.output, 1);
     shortcut_cpu(l.batch, l.w, l.h, l.c, net.layers[l.index].output, l.out_w, l.out_h, l.out_c, l.alpha, l.beta, l.output);
-    activate_array(l.output, l.outputs*l.batch, l.activation);
+    // activate_array(l.output, l.outputs*l.batch, l.activation);
+    if(l.activation == PRELU) {
+        activate_array_prelu(l.output, l.outputs * l.batch, l.prelu_p);
+    } else {
+        activate_array(l.output, l.outputs * l.batch, l.activation);
+    }
 }
 
 void backward_shortcut_layer(const layer l, network net)
@@ -78,12 +83,20 @@ void forward_shortcut_layer_gpu(const layer l, network net)
 {
     copy_gpu(l.outputs*l.batch, net.input_gpu, 1, l.output_gpu, 1);
     shortcut_gpu(l.batch, l.w, l.h, l.c, net.layers[l.index].output_gpu, l.out_w, l.out_h, l.out_c, l.alpha, l.beta, l.output_gpu);
-    activate_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation);
+    if(l.activation == PRELU) {
+        activate_array_prelu_gpu(l.output_gpu, l.outputs*l.batch, l.prelu_p);
+    } else {
+        activate_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation);
+    }
 }
 
 void backward_shortcut_layer_gpu(const layer l, network net)
 {
-    gradient_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation, l.delta_gpu);
+    if(l.activation == PRELU) {
+        gradient_array_prelu_gpu(l.output_gpu, l.outputs*l.batch, l.prelu_p, l.delta_gpu);
+    } else {
+        gradient_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation, l.delta_gpu);
+    }
     axpy_gpu(l.outputs*l.batch, l.alpha, l.delta_gpu, 1, net.delta_gpu, 1);
     shortcut_gpu(l.batch, l.out_w, l.out_h, l.out_c, l.delta_gpu, l.w, l.h, l.c, 1, l.beta, net.layers[l.index].delta_gpu);
 }

@@ -38,7 +38,11 @@ layer make_activation_layer(int batch, int inputs, ACTIVATION activation)
 void forward_activation_layer(layer l, network net)
 {
     copy_cpu(l.outputs*l.batch, net.input, 1, l.output, 1);
-    activate_array(l.output, l.outputs*l.batch, l.activation);
+    if(l.activation == PRELU) {
+        activate_array_prelu(l.output, l.outputs * l.batch, l.prelu_p);
+    } else {
+        activate_array(l.output, l.outputs*l.batch, l.activation);
+    }
 }
 
 void backward_activation_layer(layer l, network net)
@@ -52,12 +56,20 @@ void backward_activation_layer(layer l, network net)
 void forward_activation_layer_gpu(layer l, network net)
 {
     copy_gpu(l.outputs*l.batch, net.input_gpu, 1, l.output_gpu, 1);
-    activate_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation);
+    if(l.activation == PRELU) {
+        activate_array_prelu_gpu(l.output_gpu, l.outputs*l.batch, l.prelu_p);
+    } else {
+        activate_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation);
+    }
 }
 
 void backward_activation_layer_gpu(layer l, network net)
 {
-    gradient_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation, l.delta_gpu);
+    if(l.activation == PRELU) {
+        gradient_array_prelu_gpu(l.output_gpu, l.outputs*l.batch, l.prelu_p, l.delta_gpu);
+    } else {
+        gradient_array_gpu(l.output_gpu, l.outputs*l.batch, l.activation, l.delta_gpu);
+    }
     copy_gpu(l.outputs*l.batch, l.delta_gpu, 1, net.delta_gpu, 1);
 }
 #endif

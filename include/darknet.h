@@ -46,7 +46,7 @@ typedef struct{
 tree *read_tree(char *filename);
 
 typedef enum{
-    LOGISTIC, RELU, RELIE, LINEAR, RAMP, TANH, PLSE, LEAKY, ELU, LOGGY, STAIR, HARDTAN, LHTAN, SELU
+    LOGISTIC, RELU, RELIE, LINEAR, RAMP, TANH, PLSE, LEAKY, ELU, LOGGY, STAIR, HARDTAN, LHTAN, SELU, PRELU
 } ACTIVATION;
 
 typedef enum{
@@ -181,6 +181,7 @@ struct layer{
     float alpha;
     float beta;
     float kappa;
+    float prelu_p;
 
     float coord_scale;
     float object_scale;
@@ -798,6 +799,8 @@ int *read_intlist(char *s, int *n, int d);
 size_t rand_size_t();
 float rand_normal();
 float rand_uniform(float min, float max);
+
+network* init_network(char* cfg, char* weights);
 
 #ifdef __cplusplus
 }

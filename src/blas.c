@@ -348,4 +348,6 @@ void upsample_cpu(float *in, int w, int h, int c, int batch, int stride, int for
     }
 }
 
-
+float cosine_sim(int N, float* X, int INCX, float* Y, int INCY) {
+    return dot_cpu(N, X, INCX, Y, INCY) / (sqrt(dot_cpu(N, X, INCX, X, INCX)) * sqrt(dot_cpu(N, Y, INCY, Y, INCY)));
+}

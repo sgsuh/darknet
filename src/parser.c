@@ -176,7 +176,7 @@ layer parse_deconvolutional(list *options, size_params params)
 }
 
 
-convolutional_layer parse_convolutional(list *options, size_params params)
+convolutional_layer parse_convolutional(list *options, size_params params, network* net)
 {
     int n = option_find_int(options, "filters",1);
     int size = option_find_int(options, "size",1);
@@ -184,7 +184,26 @@ convolutional_layer parse_convolutional(list *options, size_params params)
     int pad = option_find_int_quiet(options, "pad",0);
     int padding = option_find_int_quiet(options, "padding",0);
     int groups = option_find_int_quiet(options, "groups", 1);
+    float prelu_p = option_find_float(options, "prelu_p", .1);
+
     if(pad) padding = size/2;
+
+    int is_skip = 0;
+
+    int l = option_find_int(options, "from", 0);
+    int index = 0;
+    layer from;
+    index = l;
+
+    if(index < 0) {
+        index = params.index + index;
+    }
+
+    from = net->layers[index];
+
+    if(index != 0) {
+        is_skip = 1;
+    }
 
     char *activation_s = option_find_str(options, "activation", "logistic");
     ACTIVATION activation = get_activation(activation_s);
@@ -199,9 +218,18 @@ convolutional_layer parse_convolutional(list *options, size_params params)
     int binary = option_find_int_quiet(options, "binary", 0);
     int xnor = option_find_int_quiet(options, "xnor", 0);
 
-    convolutional_layer layer = make_convolutional_layer(batch,h,w,c,n,groups,size,stride,padding,activation, batch_normalize, binary, xnor, params.net->adam);
+    // convolutional_layer layer = make_convolutional_layer(batch,h,w,c,n,groups,size,stride,padding,activation, batch_normalize, binary, xnor, params.net->adam);
+    convolutional_layer layer = {0};
+
+    if(is_skip == 1) {
+        layer = make_convolutional_layer(batch, from.out_h, from.out_w, from.out_c, n, groups, size, stride, padding, activation, batch_normalize, binary, xnor, params.net->adam, index);
+    } else {
+        layer = make_convolutional_layer(batch, h, w, c, n, groups, size, stride, padding, activation, batch_normalize, binary, xnor, params.net->adam, index);
+    }
+
     layer.flipped = option_find_int_quiet(options, "flipped", 0);
     layer.dot = option_find_float_quiet(options, "dot", 0);
+    layer.prelu_p = prelu_p;
 
     return layer;
 }
@@ -774,7 +802,7 @@ network *parse_network_cfg(char *filename)
         layer l = {0};
         LAYER_TYPE lt = string_to_layer_type(s->type);
         if(lt == CONVOLUTIONAL){
-            l = parse_convolutional(options, params);
+            l = parse_convolutional(options, params, net);
         }else if(lt == DECONVOLUTIONAL){
             l = parse_deconvolutional(options, params);
         }else if(lt == LOCAL){

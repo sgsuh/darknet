@@ -10,10 +10,14 @@ char *get_activation_string(ACTIVATION a);
 float activate(float x, ACTIVATION a);
 float gradient(float x, ACTIVATION a);
 void gradient_array(const float *x, const int n, const ACTIVATION a, float *delta);
+void gradient_array_prelu(const float* x, const int n, float params, float* delta);
 void activate_array(float *x, const int n, const ACTIVATION a);
+void activate_array_prelu(float* x, const int n, float params);
 #ifdef GPU
 void activate_array_gpu(float *x, int n, ACTIVATION a);
 void gradient_array_gpu(float *x, int n, ACTIVATION a, float *delta);
+void activate_array_prelu_gpu(float *x, int n, float p);
+void gradient_array_prelu_gpu(float *x, int n, float p, float *delta);
 #endif
 
 static inline float stair_activate(float x)
@@ -37,6 +41,9 @@ static inline float selu_activate(float x){return (x >= 0)*1.0507*x + (x < 0)*1.
 static inline float relie_activate(float x){return (x>0) ? x : .01*x;}
 static inline float ramp_activate(float x){return x*(x>0)+.1*x;}
 static inline float leaky_activate(float x){return (x>0) ? x : .1*x;}
+static inline float prelu_activate(float x, float p) {
+    return (x > 0) ? x : p * x;
+}
 static inline float tanh_activate(float x){return (exp(2*x)-1)/(exp(2*x)+1);}
 static inline float plse_activate(float x)
 {
@@ -80,6 +87,9 @@ static inline float selu_gradient(float x){return (x >= 0)*1.0507 + (x < 0)*(x +
 static inline float relie_gradient(float x){return (x>0) ? 1 : .01;}
 static inline float ramp_gradient(float x){return (x>0)+.1;}
 static inline float leaky_gradient(float x){return (x>0) ? 1 : .1;}
+static inline float prelu_gradient(float x, float p) {
+    return (x > 0) ? 1 : p;
+}
 static inline float tanh_gradient(float x){return 1-x*x;}
 static inline float plse_gradient(float x){return (x < 0 || x > 1) ? .01 : .125;}
 

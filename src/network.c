@@ -50,6 +50,14 @@ load_args get_base_args(network *net)
     return args;
 }
 
+network* init_network(char* cfg, char* weights) {
+    network* net = parse_network_cfg(cfg);
+
+    load_weights(net, weights);
+
+    return net;
+}
+
 network *load_network(char *cfg, char *weights, int clear)
 {
     network *net = parse_network_cfg(cfg);
